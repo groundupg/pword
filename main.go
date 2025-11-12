@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"slices"
+	"flag"
 )
 
 func PasswordPath() (string, error) {
@@ -48,7 +51,7 @@ func NewPassword(file, key, pass string) error {
 	return nil
 }
 
-func GetFile(file, key string) ([]byte, error) {
+func GetFile(file string) ([]byte, error) {
 	p, err := PasswordPath()
 	if err != nil {
 		return nil, err
@@ -66,8 +69,25 @@ func GetPassword(file, key, pass string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(b)
+	return nil
+}
+
+
+func HandleArgs(args []string) error {
+	ns := "user"
+	if slices.Contains(args, "-ns") {
+		ns = args[slices.Index(args, "-ns") + 1]
+	}
+	
+	switch args[0] {
+		case "-n":
+			err := NewPassword(, args[1])
+	}
 }
 
 func main() {
-
+	var ns, new string
+	args := os.Args[1:]
+	fmt.Println(len(args))
 }
