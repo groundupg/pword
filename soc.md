@@ -96,3 +96,7 @@ Each file can simply be a key-value mapping:
 jira xytgeugb_encrypted_password_debhjkfbsjh
 gcloud gsefeb_encrypted_password_fsdjknfsk
 ```
+
+## Implementing
+
+**Types**
