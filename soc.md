@@ -99,4 +99,3 @@ gcloud gsefeb_encrypted_password_fsdjknfsk
 
 ## Implementing
 
-**Types**

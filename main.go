@@ -1,11 +1,30 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
-	"slices"
-	"flag"
 )
+
+var (
+	NameSpace  string
+	NewFlag    bool
+	DeleteFlag bool
+	ListFlag   bool
+)
+
+func InitFlags() {
+	// Initialises flags
+	flag.StringVar(&NameSpace, "ns", "user", "Namespace")
+	flag.StringVar(&NameSpace, "namespace", "user", "Namespace")
+	flag.BoolVar(&NewFlag, "n", false, "create a new password")
+	flag.BoolVar(&NewFlag, "new", false, "create a new password")
+	flag.BoolVar(&DeleteFlag, "d", false, "delete a password")
+	flag.BoolVar(&DeleteFlag, "delete", false, "delete a password")
+	flag.BoolVar(&ListFlag, "l", false, "list all passwords")
+	flag.BoolVar(&ListFlag, "list", false, "list all passwords")
+	flag.Parse()
+}
 
 func PasswordPath() (string, error) {
 	p, flag := os.LookupEnv("XDG_DATA_HOME")
@@ -27,67 +46,55 @@ func MakePasswordFile(name string) error {
 	if err != nil {
 		return err
 	}
-	f, err := os.Create(p + name)
+	f, err := os.Create(p + "/" + name)
 	if err != nil {
 		return err
 	}
 	if err = f.Chmod(0600); err != nil {
 		return err
 	}
+	fmt.Printf("CREATED NAMESPACE %s\n\r", name)
 	return nil
 }
 
-func NewPassword(file, key, pass string) error {
+func GetFile(file string) (string, error) {
 	p, err := PasswordPath()
 	if err != nil {
-		return err
+		return "", err
 	}
 	fp := p + "/" + file
-	f, err := os.OpenFile(fp, os.O_APPEND|os.O_WRONLY, 0600)
+	f, err := os.ReadFile(fp)
 	if err != nil {
-		return err
+		return "", err
 	}
-	f.WriteString(key + " " + pass + "\n")
+	return string(f), nil
+}
+
+func HandleNewPassword(key, value string) error {
+	if err := NewPassword(key, value); os.IsNotExist(err) == true {
+		if err = MakePasswordFile(NameSpace); err != nil {
+			return err
+		}
+		return NewPassword(key, value)
+	}
 	return nil
 }
 
-func GetFile(file string) ([]byte, error) {
-	p, err := PasswordPath()
-	if err != nil {
-		return nil, err
+func HandleArgs() error {
+	args := flag.Args()
+	if NewFlag == true {
+		return HandleNewPassword(args[0], args[1])
 	}
-	fp := p + "/" + file
-	b, err := os.ReadFile(fp)
-	if err != nil {
-		return nil, err
+	if DeleteFlag == true {
+		return HandleDelete
 	}
-	return b, nil
-}
-
-func GetPassword(file, key, pass string) error {
-	b, err := GetFile(file)
-	if err != nil {
-		return err
-	}
-	fmt.Println(b)
-	return nil
-}
-
-
-func HandleArgs(args []string) error {
-	ns := "user"
-	if slices.Contains(args, "-ns") {
-		ns = args[slices.Index(args, "-ns") + 1]
-	}
-	
-	switch args[0] {
-		case "-n":
-			err := NewPassword(, args[1])
-	}
+	return PrintPassword(args[0])
 }
 
 func main() {
-	var ns, new string
-	args := os.Args[1:]
-	fmt.Println(len(args))
+	InitFlags()
+	err := HandleArgs()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
