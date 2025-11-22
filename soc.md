@@ -100,3 +100,92 @@ gcloud gsefeb_encrypted_password_fsdjknfsk
 ## Implementing
 
 **Types**
+
+# 22.11.25
+
+I have just deleted the main file which I had begun as the main event loop of the pword program,
+and while I had made some sense of *progress*, I had felt the cloud of complexity weining over
+my mental state. It is this which contributed to my not attending to this program for 10 days now.
+
+Complexity came, in this instance, in the attempt of implementing the command line interface which
+I designed, mapping the commands to actual functionality.
+In attempting to implement, I did not reason too much with regards to how I *should* implement
+a cli, or how one goes about building a cli in the first place; I thought that -- being a small program
+-- I could hold all of the different commands in my head.
+How wrong I was...
+
+I would now like to *think* about the procedure behind taking input in this program, and mapping
+that input to functionality.
+To do this, I will define the set of all *symbols* which are represented as input within my program:
+
+```go
+command = "pword" password | "pword" namespace {password} | "pword" namespace "--list"
+
+password = "-p" word {pass_option} | "-p" word "--new" (word | "--random")
+
+namespace = "-ns" ns {ns_option}
+
+ns_option = "--create"
+pass_option = "--copy"
+
+word = char{char}
+char = "A"..."Z" | "a"..."z" | "0"..."9"
+```
+
+We are going to assume that our language has an `os.Args` global variable, which produces
+an array of whitespace-separated input values starting index after the first value of "pword".
+
+This then enables us to iterate through `os.Args`, scanning each element of input to
+it's corresponding symbol value.
+
+From the definition above, we can infer that `os.Args` should produce an array where each
+value are one of the constants defined below.
+
+```go
+type Symbol uint8
+
+const (
+    passInitFlag Symbol = iota
+    word
+    newFlag
+    createFlag
+    randomFlag
+    nsInitFlag
+    copyFlag
+    listFlag
+)
+```
+
+Scanning can then be done through the calling of `Scan()` defined below:
+
+```go
+func DetermineSymbol(symbol string) Symbol {
+   switch symbol {
+    case "-p":
+        return passInitFlag
+    case "-n":
+        return newFlag
+    case "--create":
+        return createFlag
+    case "--random":
+        return randomFlag
+    case "-ns":
+        return nsInitFlag
+    case "--list":
+        return listFlag
+    case "--copy":
+        return copyFlag
+    default:
+        return word
+} 
+}
+
+func Scan() []Symbol {
+    var symbols []Symbol
+    for i:= range os.Args {
+        s := DetermineSymbol(os.Args[i])
+        symbols = append(symbols, s)
+    }
+    return symbols
+}
+```
